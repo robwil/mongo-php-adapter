@@ -23,11 +23,26 @@ class MongoCursorTest extends TestCase
     public function testCursorConvertsTypes()
     {
         $this->prepareData();
-
         $collection = $this->getCollection();
-        $cursor = $collection->find(['foo' => 'bar']);
+        $cursor = $collection->find([ 'foo' => 'bar' ]);
         $this->assertCount(2, $cursor);
 
+        $this->assertCursorIteration($cursor);
+    }
+
+    public function testCursorHandlesHasNextBeforeIteration()
+    {
+        // see https://github.com/alcaeus/mongo-php-adapter/issues/190
+        $this->prepareData();
+        $collection = $this->getCollection();
+        $cursor = $collection->find([ 'foo' => 'bar' ]);
+        $this->assertTrue($cursor->hasNext());
+
+        $this->assertCursorIteration($cursor);
+    }
+
+    private function assertCursorIteration($cursor)
+    {
         $iterated = 0;
         foreach ($cursor as $key => $item) {
             $this->assertSame($iterated, $cursor->info()['at']);
